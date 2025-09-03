@@ -1,103 +1,312 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+import React from 'react';
+import { ColumnDef } from '@tanstack/react-table';
+import { Store, Product, storeData, productData } from '@/lib/demo-data';
+import { DataTable } from '@/components/data-table';
+import {
+  createColumnHelper,
+  DataTableColumnHeader,
+  StatusBadge,
+  LinkButton,
+} from '@/components/data-table-components';
+import { Badge } from '@/components/ui/badge';
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+import { Eye, Edit, Trash2 } from 'lucide-react';
+
+const Page = () => {
+  const columnHelper = createColumnHelper();
+
+  const createHandlers = <T,>(entityName: string) => ({
+    handleExport: (selectedItems: T[]) => {
+      console.log(`Exporting ${entityName}:`, selectedItems);
+      alert(`Exporting ${selectedItems.length} ${entityName} to CSV`);
+    },
+    handleSelection: (selectedItems: T[]) => {
+      console.log(`Selected ${entityName}:`, selectedItems);
+    },
+  });
+
+  const storeHandlers = createHandlers<Store>('stores');
+  const productHandlers = createHandlers<Product>('products');
+
+  const commonTableProps = {
+    enableRowSelection: true,
+    enableExport: true,
+    enableGlobalSearch: true,
+    enableColumnFilters: true,
+    enableColumnVisibility: true,
+    pageSizeOptions: [5, 10, 20, 50],
+    className: 'bg-white rounded-lg border shadow-sm',
+  };
+
+  const handleStoreEdit = (
+    rowId: string,
+    field: string,
+    newValue: string | number,
+    rowData: Store
+  ) => {
+    console.log(
+      `Editing store ${rowId}, field: ${field}, new value:`,
+      newValue
+    );
+    console.log('Full row data:', rowData);
+    alert(`Updated ${field} for ${rowData.name} to: ${newValue}`);
+  };
+
+  const handleProductEdit = (
+    rowId: string,
+    field: string,
+    newValue: string | number,
+    rowData: Product
+  ) => {
+    console.log(
+      `Editing product ${rowId}, field: ${field}, new value:`,
+      newValue
+    );
+    console.log('Full row data:', rowData);
+    alert(`Updated ${field} for ${rowData.name} to: ${newValue}`);
+  };
+
+  const createStandardActions = <T,>(entityType: string) => [
+    {
+      label: `View ${entityType}`,
+      onClick: (item: T) => console.log(`View ${entityType}:`, item),
+      icon: Eye,
+      destructive: false,
+      disabled: false,
+    },
+    {
+      label: `Edit ${entityType}`,
+      onClick: (item: T) => console.log(`Edit ${entityType}:`, item),
+      icon: Edit,
+      destructive: false,
+      disabled: false,
+    },
+    {
+      label: `Delete ${entityType}`,
+      onClick: (item: T) => console.log(`Delete ${entityType}:`, item),
+      icon: Trash2,
+      destructive: true,
+      disabled: false,
+    },
+  ];
+
+  const storeColumns: ColumnDef<Store>[] = [
+    columnHelper.editable(
+      'name',
+      'Store',
+      (rowId, newValue, rowData) =>
+        handleStoreEdit(rowId, 'name', newValue, rowData),
+      {
+        placeholder: 'Enter store name',
+        maxLength: 50,
+      }
+    ),
+    {
+      accessorKey: 'city',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title='City' />
+      ),
+      cell: ({ row }) => (
+        <div className='font-medium'>
+          {row.original.city}, {row.original.state}
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+      ),
+    },
+    columnHelper.editable(
+      'email',
+      'Email',
+      (rowId, newValue, rowData) =>
+        handleStoreEdit(rowId, 'email', newValue, rowData),
+      {
+        type: 'email',
+        placeholder: 'Enter email address',
+        maxLength: 100,
+      }
+    ),
+    columnHelper.status('registrationStatus', 'Registration Status'),
+    columnHelper.text('merchantType', 'Merchant Type'),
+    {
+      accessorKey: 'revenue',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title='Revenue' />
+      ),
+      cell: ({ getValue }) => (
+        <div className='text-right font-mono font-medium'>
+          ${(getValue() as number).toLocaleString()}
+        </div>
+      ),
+    },
+    {
+      id: 'go-to-store',
+      header: 'Action',
+      cell: ({ row }) => (
+        <LinkButton
+          href={`/store/${row.original.storeId}`}
+          variant='default'
+          className='bg-teal-600 hover:bg-teal-700 text-white'
         >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
+          Go to store
+        </LinkButton>
+      ),
+      enableSorting: false,
+      enableHiding: false,
+    },
+    columnHelper.actions(createStandardActions<Store>('Store')),
+  ];
+
+  const productColumns: ColumnDef<Product>[] = [
+    {
+      accessorKey: 'name',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title='Product' />
+      ),
+      cell: ({ row }) => (
+        <div className='flex items-center space-x-3'>
+          <div className='flex h-10 w-10 items-center justify-center rounded-md bg-muted'>
+            <div className='text-xs font-medium text-muted-foreground'>
+              {row.original.name.slice(0, 2).toUpperCase()}
+            </div>
+          </div>
+          <div className='space-y-1'>
+            <div className='font-medium'>{row.original.name}</div>
+            <div className='text-xs text-muted-foreground'>
+              ID: {row.original.productId}
+            </div>
+          </div>
+        </div>
+      ),
+    },
+    columnHelper.editable(
+      'brand',
+      'Brand',
+      (rowId, newValue, rowData) =>
+        handleProductEdit(rowId, 'brand', newValue, rowData),
+      {
+        placeholder: 'Enter brand name',
+        maxLength: 30,
+      }
+    ),
+    {
+      accessorKey: 'category',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title='Category' />
+      ),
+      cell: ({ getValue }) => (
+        <Badge variant='outline' className='text-xs'>
+          {getValue() as string}
+        </Badge>
+      ),
+    },
+    columnHelper.editable(
+      'size',
+      'Size',
+      (rowId, newValue, rowData) =>
+        handleProductEdit(rowId, 'size', newValue, rowData),
+      {
+        placeholder: 'Enter size',
+        maxLength: 20,
+        sortable: false,
+      }
+    ),
+    {
+      accessorKey: 'priceType',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title='Price Type' />
+      ),
+      cell: ({ getValue }) => (
+        <StatusBadge
+          status={getValue() as string}
+          variant={getValue() === 'fixed' ? 'default' : 'secondary'}
+        />
+      ),
+    },
+    columnHelper.editable(
+      'price',
+      'Price',
+      (rowId, newValue, rowData) =>
+        handleProductEdit(rowId, 'price', newValue, rowData),
+      {
+        type: 'number',
+        placeholder: '0.00',
+      }
+    ),
+    {
+      accessorKey: 'stock',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title='Stock' />
+      ),
+      cell: ({ getValue }) => {
+        const stock = getValue() as number;
+        return (
+          <div className='text-right'>
+            <span
+              className={`font-medium ${
+                stock < 50 ? 'text-red-600' : 'text-green-600'
+              }`}
+            >
+              {stock}
+            </span>
+          </div>
+        );
+      },
+    },
+    columnHelper.actions(createStandardActions<Product>('Product')),
+  ];
+
+  return (
+    <div className='min-h-screen bg-background'>
+      <div className='border-b bg-white'>
+        <div className='container mx-auto px-4 py-6'>
+          <div className='flex items-center justify-between'>
+            <div className='flex items-center space-x-4'>
+              <div className='flex h-10 w-10 items-center justify-center rounded-md bg-teal-600 text-white font-bold'>
+                E
+              </div>
+              <div>
+                <h1 className='text-2xl font-bold text-gray-900'>ETNOWE</h1>
+                <p className='text-sm text-gray-500'>Dashboard Table POC</p>
+              </div>
+            </div>
+            <div className='flex items-center space-x-4'>
+              <div className='flex items-center space-x-2 text-sm text-gray-600'>
+                <span>Musawir</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className='container mx-auto px-4 py-8 space-y-12'>
+        <section className='space-y-6'>
+          <DataTable
+            columns={storeColumns}
+            data={storeData}
+            title='Store Listing'
+            description='Manage and monitor all registered stores across different locations and merchant types.'
+            searchKey='name'
+            onRowSelectionChange={storeHandlers.handleSelection}
+            onExport={storeHandlers.handleExport}
+            {...commonTableProps}
           />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
+        </section>
+
+        <section className='space-y-6'>
+          <DataTable
+            columns={productColumns}
+            data={productData}
+            title='Inventory'
+            description='Track and manage product inventory across all categories with real-time stock levels.'
+            searchKey='name'
+            onRowSelectionChange={productHandlers.handleSelection}
+            onExport={productHandlers.handleExport}
+            {...commonTableProps}
           />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+        </section>
+      </div>
     </div>
   );
-}
+};
+
+export default Page;
